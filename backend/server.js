@@ -1,0 +1,58 @@
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+import transactionRoutes from "./routes/transactionRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+import pdfRoutes from "./routes/pdfRoutes.js";
+import budgetRoutes from "./routes/budgetRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+
+const app = express();
+
+const configuredFrontendOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+const allowedOrigins = new Set([
+  configuredFrontendOrigin,
+  "http://localhost:5173",
+  "http://localhost:5176",
+]);
+const localOriginPattern = /^http:\/\/localhost:\d+$/;
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.has(origin) || localOriginPattern.test(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error("Not allowed by CORS"));
+  },
+}));
+app.use(express.json());
+
+
+// 🔐 AUTH ROUTES
+app.use("/api/auth", authRoutes);
+
+// 💸 TRANSACTION ROUTES
+app.use("/api/transactions", transactionRoutes);
+
+// 💳 PAYMENT ROUTES
+app.use("/api/payment", paymentRoutes);
+
+app.use("/api/pdf", pdfRoutes);
+
+app.use("/api/budget", budgetRoutes);
+
+app.use("/api/notifications", notificationRoutes);
+// TEST ROUTE
+app.get("/", (req, res) => {
+  res.send("API Running...");
+});
+
+app.listen(process.env.PORT || 5000, () => {
+  console.log(`Server running on port ${process.env.PORT || 5000}`);
+});
