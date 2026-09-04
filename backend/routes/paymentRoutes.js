@@ -17,7 +17,8 @@ router.post(
   protect,
   async (req, res) => {
     try {
-      const amount = 500;
+      const rawAmount = Number(req.body.amount) || 500;
+      const amount = Math.max(100, Math.min(500000, Math.floor(rawAmount)));
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
@@ -28,6 +29,7 @@ router.post(
               currency: "inr",
               product_data: {
                 name: "Wallet Recharge",
+                description: "Instant balance recharge to your NovaPay account",
               },
               unit_amount: amount * 100,
             },
@@ -77,6 +79,10 @@ router.post(
 
       const { session_id } = req.body;
 
+      if (!session_id) {
+        return res.status(400).json({ error: "Session ID is required" });
+      }
+
       console.log("Session ID:", session_id);
 
       const session = await stripe.checkout.sessions.retrieve(session_id);
@@ -93,20 +99,14 @@ router.post(
       const amount = Number(session.metadata.amount);
       const userId = Number(session.metadata.userId);
 
-      // Prevent duplicate recharge
+      // Prevent duplicate recharge using session_id
       const existing = await pool.query(
         `
         SELECT id
         FROM transactions
-        WHERE name = $1
-        AND user_id = $2
-        AND amount = $3
+        WHERE stripe_session_id = $1
         `,
-        [
-          "Wallet Recharge",
-          userId,
-          amount,
-        ]
+        [session_id]
       );
 
       if (existing.rows.length > 0) {
@@ -140,10 +140,11 @@ router.post(
           amount,
           status,
           user_id,
-          receiver_email
+          receiver_email,
+          stripe_session_id
         )
         VALUES
-        ($1,$2,$3,$4,$5)
+        ($1,$2,$3,$4,$5,$6)
         `,
         [
           "Wallet Recharge",
@@ -151,6 +152,7 @@ router.post(
           "success",
           userId,
           null,
+          session_id,
         ]
       );
 

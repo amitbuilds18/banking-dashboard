@@ -27,7 +27,7 @@ router.get("/profile", protect, async (req, res) => {
 
     const result = await pool.query(
       `
-      SELECT id, name, email, balance
+      SELECT id, name, email, balance, phone
       FROM users
       WHERE id = $1
       `,
@@ -42,6 +42,32 @@ router.get("/profile", protect, async (req, res) => {
       error: err.message
     });
 
+  }
+});
+
+// UPDATE PROFILE
+router.put("/profile", protect, async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+
+    if (!name || name.trim() === "") {
+      return res.status(400).json({ error: "Name cannot be empty" });
+    }
+
+    const updated = await pool.query(
+      `UPDATE users
+       SET name = $1, phone = COALESCE($2, phone)
+       WHERE id = $3
+       RETURNING id, name, email, balance, phone`,
+      [name.trim(), phone || null, req.user.id]
+    );
+
+    res.json({
+      message: "Profile updated successfully",
+      user: updated.rows[0]
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

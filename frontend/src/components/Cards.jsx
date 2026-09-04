@@ -49,9 +49,6 @@ export default function Cards() {
     };
 
     loadData();
-
-    const interval = setInterval(loadData, 3000);
-    return () => clearInterval(interval);
   }, []);
 
   if (error && !loading) {

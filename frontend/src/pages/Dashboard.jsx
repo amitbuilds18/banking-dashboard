@@ -1,6 +1,10 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Cards from "../components/Cards";
+import VirtualCard from "../components/VirtualCard";
+import SmartInsights from "../components/SmartInsights";
+import SavingsVaults from "../components/SavingsVaults";
 import Charts from "../components/Charts";
 import TransactionsTable from "../components/TransactionsTable";
 import StripeCheckout from "../components/StripeCheckout";
@@ -8,6 +12,11 @@ import NotificationBell from "../components/NotificationBell";
 
 export default function Dashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleRefreshData = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-white">
@@ -25,8 +34,9 @@ export default function Dashboard() {
       )}
 
       <div className="dashboard-shell flex-1 overflow-y-auto p-6 md:p-8">
-        <div className="mx-auto max-w-7xl">
-          <header className="mb-8 flex flex-col gap-4 rounded-2xl border border-slate-700/60 bg-slate-900/50 p-5 shadow-lg md:flex-row md:items-center md:justify-between">
+        <div className="mx-auto max-w-7xl space-y-8">
+          {/* Header */}
+          <header className="flex flex-col gap-4 rounded-3xl border border-slate-700/60 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -38,27 +48,52 @@ export default function Dashboard() {
               </button>
 
               <div>
-                <p className="text-sm uppercase tracking-[0.2em] text-blue-400">Overview</p>
-                <h1 className="mt-2 text-3xl font-bold text-white">Finance Dashboard</h1>
+                <p className="text-xs uppercase tracking-[0.25em] text-cyan-400">NovaPay Neo-Bank</p>
+                <h1 className="mt-1 text-3xl font-black text-white">Financial HQ</h1>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-300">
-                Active account
-              </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                to="/send-money"
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-blue-500/20 transition hover:brightness-110"
+              >
+                💸 Send Money
+              </Link>
+              <Link
+                to="/transactions"
+                className="rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-700 hover:text-white"
+              >
+                📄 Statements
+              </Link>
               <NotificationBell />
             </div>
           </header>
 
-          <Cards />
+          {/* Quick Metrics Cards */}
+          <Cards key={`cards-${refreshKey}`} />
 
-          <div className="my-6">
-            <StripeCheckout />
+          {/* 3D Virtual Card + AI Financial Insights Split Row */}
+          <div className="grid gap-6 lg:grid-cols-12">
+            <div className="lg:col-span-5">
+              <VirtualCard />
+            </div>
+            <div className="lg:col-span-7">
+              <SmartInsights key={`insights-${refreshKey}`} />
+            </div>
           </div>
 
-          <Charts />
-          <TransactionsTable />
+          {/* Smart Savings Vaults with Round-Up */}
+          <SavingsVaults onBalanceUpdate={handleRefreshData} />
+
+          {/* Instant Stripe Wallet Recharge */}
+          <StripeCheckout />
+
+          {/* Charts & Analytics */}
+          <Charts key={`charts-${refreshKey}`} />
+
+          {/* Transactions Table with Badges & Icons */}
+          <TransactionsTable key={`tx-${refreshKey}`} />
         </div>
       </div>
     </div>

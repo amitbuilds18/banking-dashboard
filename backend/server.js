@@ -10,6 +10,12 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import pdfRoutes from "./routes/pdfRoutes.js";
 import budgetRoutes from "./routes/budgetRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import cardRoutes from "./routes/cardRoutes.js";
+import vaultRoutes from "./routes/vaultRoutes.js";
+import { initDatabase } from "./initDb.js";
+
+// Initialize database schema tables on startup
+initDatabase();
 
 const app = express();
 
@@ -48,6 +54,13 @@ app.use("/api/pdf", pdfRoutes);
 app.use("/api/budget", budgetRoutes);
 
 app.use("/api/notifications", notificationRoutes);
+
+// 💳 VIRTUAL CARD ROUTES
+app.use("/api/card", cardRoutes);
+
+// 🏺 SAVINGS VAULTS ROUTES
+app.use("/api/vaults", vaultRoutes);
+
 // TEST ROUTE
 app.get("/", (req, res) => {
   res.send("API Running...");

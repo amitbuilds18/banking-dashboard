@@ -155,20 +155,59 @@ export default function TransactionsTable() {
                 </td>
               </tr>
             ) : (
-              filteredTransactions.map((t) => (
-                <tr key={t.id} className="border-b border-slate-700/80 transition hover:bg-slate-800/60">
-                  <td className="py-5 font-medium text-white">{t.name}</td>
+              filteredTransactions.map((t) => {
+                const isExpense = Number(t.amount) < 0;
+                const absAmount = Math.abs(Number(t.amount));
+                const isHighValue = absAmount >= 10000;
 
-                  <td className={`flex items-center gap-2 py-5 font-bold ${t.amount < 0 ? "text-red-400" : "text-emerald-400"}`}>
-                    {t.amount < 0 ? <FaArrowDown /> : <FaArrowUp />}
-                    ₹{Math.abs(t.amount)}
-                  </td>
+                const getIcon = (name) => {
+                  const n = (name || "").toLowerCase();
+                  if (n.includes("recharge")) return "💳";
+                  if (n.includes("sent") || n.includes("send")) return "💸";
+                  if (n.includes("received")) return "📥";
+                  if (n.includes("vault") || n.includes("spare")) return "🏺";
+                  return "💼";
+                };
 
-                  <td>
-                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${t.status === "success" ? "bg-emerald-500/20 text-emerald-300" : "bg-yellow-500/20 text-yellow-300"}`}>
-                      {t.status}
-                    </span>
-                  </td>
+                return (
+                  <tr key={t.id} className="border-b border-slate-700/80 transition hover:bg-slate-800/60">
+                    <td className="py-5 font-medium text-white">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 text-base">
+                          {getIcon(t.name)}
+                        </span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span>{t.name}</span>
+                            {isHighValue ? (
+                              <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
+                                ⚠️ High Value
+                              </span>
+                            ) : (
+                              <span className="rounded-full bg-slate-700/60 px-2 py-0.5 text-[10px] text-slate-300">
+                                🛡️ Verified
+                              </span>
+                            )}
+                          </div>
+                          {t.receiver_email && (
+                            <p className="text-xs text-slate-400">{t.receiver_email}</p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className={`py-5 font-bold ${isExpense ? "text-red-400" : "text-emerald-400"}`}>
+                      <div className="flex items-center gap-1.5">
+                        {isExpense ? <FaArrowDown className="text-xs" /> : <FaArrowUp className="text-xs" />}
+                        ₹{absAmount.toLocaleString("en-IN")}
+                      </div>
+                    </td>
+
+                    <td>
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${t.status === "success" ? "bg-emerald-500/20 text-emerald-300" : "bg-yellow-500/20 text-yellow-300"}`}>
+                        {t.status}
+                      </span>
+                    </td>
 
                   <td className="text-center">
                     <button
@@ -179,7 +218,8 @@ export default function TransactionsTable() {
                     </button>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>
