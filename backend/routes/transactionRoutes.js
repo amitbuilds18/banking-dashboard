@@ -103,20 +103,22 @@ router.post("/send", protect, async (req, res) => {
       });
     }
 
+    const normalizedReceiverEmail = receiver_email.trim().toLowerCase();
+
     // Receiver
     const receiver = await client.query(
       `
       SELECT *
       FROM users
-      WHERE email=$1
+      WHERE LOWER(email)=$1
       `,
-      [receiver_email]
+      [normalizedReceiverEmail]
     );
 
     if (receiver.rows.length === 0) {
       await client.query("ROLLBACK");
       return res.status(404).json({
-        error: "Receiver not found"
+        error: "Receiver not found with this email"
       });
     }
 
@@ -128,6 +130,8 @@ router.post("/send", protect, async (req, res) => {
         error: "Cannot send money to yourself"
       });
     }
+
+    const balance = Number(sender.rows[0].balance || 0);
 
     let totalDeduction = numericAmount;
     let roundUpAmount = 0;

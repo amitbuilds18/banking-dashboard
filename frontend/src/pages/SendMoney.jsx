@@ -9,7 +9,7 @@ export default function SendMoney() {
   const [receiverEmail, setReceiverEmail] = useState("");
   const [amount, setAmount] = useState("");
   const [roundUp, setRoundUp] = useState(true);
-  const [securityPin, setSecurityPin] = useState("");
+  const [securityPin, setSecurityPin] = useState("1234");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -181,17 +181,25 @@ export default function SendMoney() {
             </div>
 
             <div className="mb-5">
-              <label className="mb-1 block text-xs text-slate-300">
-                Enter 4-digit Transfer Security PIN (Default: 1234)
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs text-slate-300">
+                  🔐 4-Digit Security PIN (ATM PIN)
+                </label>
+                <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                  PIN: 1234
+                </span>
+              </div>
               <input
                 type="password"
                 maxLength={4}
                 value={securityPin}
                 onChange={(e) => setSecurityPin(e.target.value)}
-                placeholder="••••"
+                placeholder="1234"
                 className="w-full tracking-[0.5em] text-center rounded-xl border border-slate-700 bg-slate-800 py-2.5 font-mono text-lg text-white outline-none focus:border-cyan-400"
               />
+              <p className="mt-1.5 text-[11px] text-slate-400 text-center">
+                Koi OTP nahi aayega — demo ke liye default PIN <strong className="text-cyan-300">1234</strong> pehle se bhara hua hai.
+              </p>
             </div>
 
             <div className="flex gap-3">
