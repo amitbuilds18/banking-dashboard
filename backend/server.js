@@ -39,7 +39,6 @@ app.use(cors({
 }));
 app.use(express.json());
 
-
 // 🔐 AUTH ROUTES
 app.use("/api/auth", authRoutes);
 
@@ -64,6 +63,19 @@ app.use("/api/vaults", vaultRoutes);
 // TEST ROUTE
 app.get("/", (req, res) => {
   res.send("API Running...");
+});
+
+// 404 handler - agar koi route match hi nahi hua
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
+
+// Centralized error handler - hamesha SABSE LAST middleware hona chahiye
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || "Something went wrong, please try again",
+  });
 });
 
 app.listen(process.env.PORT || 5000, () => {
