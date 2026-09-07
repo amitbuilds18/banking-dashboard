@@ -12,6 +12,10 @@ router.post("/", protect, async (req, res) => {
   try {
     const { name, amount, status, receiver_email } = req.body;
 
+    if (!name || amount === undefined) {
+      return res.status(400).json({ error: "Name and amount are required" });
+    }
+
     const result = await pool.query(
       `
       INSERT INTO transactions
@@ -28,7 +32,7 @@ router.post("/", protect, async (req, res) => {
       ]
     );
 
-    res.json(result.rows[0]);
+    res.status(201).json(result.rows[0]);
 
   } catch (err) {
     console.error(err);

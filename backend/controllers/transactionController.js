@@ -1,4 +1,5 @@
 import pool from "../db.js";
+import AppError from "../utils/AppError.js";
 
 // GET
 export const getTransactions = async (req, res, next) => {
@@ -19,7 +20,7 @@ export const addTransaction = async (req, res, next) => {
     const { name, amount } = req.body;
 
     if (!name || amount === undefined) {
-      return res.status(400).json({ message: "Name and amount are required" });
+      throw new AppError(400, "Name and amount are required");
     }
 
     const result = await pool.query(
