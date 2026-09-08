@@ -26,10 +26,16 @@ const allowedOrigins = new Set([
   "http://localhost:5176",
 ]);
 const localOriginPattern = /^http:\/\/localhost:\d+$/;
+const vercelOriginPattern = /^https:\/\/.*\.vercel\.app$/;
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.has(origin) || localOriginPattern.test(origin)) {
+    if (
+      !origin ||
+      allowedOrigins.has(origin) ||
+      localOriginPattern.test(origin) ||
+      vercelOriginPattern.test(origin)
+    ) {
       callback(null, true);
       return;
     }
