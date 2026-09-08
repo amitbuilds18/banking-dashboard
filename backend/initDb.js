@@ -1,6 +1,10 @@
 import pool from "./db.js";
 
 export async function initDatabase() {
+  if (!process.env.DATABASE_URL) {
+    console.warn("⚠️ DATABASE_URL is not set. Skipping initDatabase.");
+    return;
+  }
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS vaults (
