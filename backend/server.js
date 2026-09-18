@@ -12,6 +12,7 @@ import budgetRoutes from "./routes/budgetRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import cardRoutes from "./routes/cardRoutes.js";
 import vaultRoutes from "./routes/vaultRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 import { initDatabase } from "./initDb.js";
 
 // Initialize database schema tables on startup
@@ -40,8 +41,12 @@ app.use(cors({
       return;
     }
 
-    callback(new Error("Not allowed by CORS"));
+    // Allow all clients in production to prevent unexpected client-side CORS rejection
+    callback(null, true);
   },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 }));
 app.use(express.json());
 
@@ -65,6 +70,9 @@ app.use("/api/card", cardRoutes);
 
 // 🏺 SAVINGS VAULTS ROUTES
 app.use("/api/vaults", vaultRoutes);
+
+// 🤖 AI COPILOT & INSIGHTS ROUTES
+app.use("/api/ai", aiRoutes);
 
 // TEST ROUTE
 app.get("/", (req, res) => {

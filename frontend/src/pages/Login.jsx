@@ -36,9 +36,45 @@ export default function Login() {
       login(data.token, data.user);
       showToast("Login successful", "success");
       navigate("/");
-    } catch {
-      setError("Server error");
-      showToast("Server error, please try again", "error");
+    } catch (err) {
+      console.error("Login Error:", err);
+      const message =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (err.message === "Network Error"
+          ? "Unable to connect to banking server. Please check your network connection."
+          : "Invalid email or password. Please try again.");
+      setError(message);
+      showToast(message, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await API.post("/auth/demo");
+      const data = res.data;
+
+      if (data.error) {
+        setError(data.error || "Demo login failed");
+        showToast(data.error || "Demo login failed", "error");
+        return;
+      }
+
+      login(data.token, data.user);
+      showToast("Welcome to NovaPay Demo Tour! 🚀", "success");
+      navigate("/");
+    } catch (err) {
+      console.error("Demo login error:", err);
+      const message =
+        err.response?.data?.error ||
+        "Demo server temporarily busy. Please try again.";
+      setError(message);
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -53,9 +89,13 @@ export default function Login() {
         className="relative w-full max-w-md rounded-3xl border border-slate-700/80 bg-slate-900/80 p-8 shadow-2xl shadow-blue-950/30 backdrop-blur-xl"
       >
         <div className="mb-6 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 text-2xl font-bold text-white shadow-lg shadow-blue-500/30">
+          <Link
+            to="/"
+            className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-600 to-indigo-600 text-2xl font-bold text-white shadow-lg shadow-cyan-500/30 transition hover:scale-105"
+            title="NovaPay Home"
+          >
             ₹
-          </div>
+          </Link>
         </div>
 
         <div className="mb-6 text-center">
@@ -102,12 +142,35 @@ export default function Login() {
           {loading ? "Logging in..." : "Login"}
         </button>
 
+        {/* Instant One-Click Demo Access */}
+        <div className="relative my-5 flex items-center justify-center">
+          <div className="w-full border-t border-slate-800" />
+          <span className="absolute bg-slate-900 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            or explore
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleDemoLogin}
+          disabled={loading}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/40 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-indigo-500/10 py-3 text-xs font-bold text-cyan-300 shadow-md shadow-cyan-500/10 transition hover:bg-cyan-500/20 hover:text-white active:scale-95"
+        >
+          <span>⚡ Instant Demo Access (One-Click Tour)</span>
+        </button>
+
         <p className="mt-6 text-center text-sm text-slate-400">
           Don’t have an account?{" "}
           <Link to="/register" className="font-medium text-blue-400 hover:text-blue-300">
             Register
           </Link>
         </p>
+
+        <div className="mt-4 text-center">
+          <Link to="/" className="text-xs text-slate-500 hover:text-slate-300 transition">
+            ← Back to NovaPay Showcase
+          </Link>
+        </div>
       </form>
     </div>
   );

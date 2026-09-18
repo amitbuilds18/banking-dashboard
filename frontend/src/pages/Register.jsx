@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import API from "../services/api";
 
 export default function Register() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const { showToast } = useToast();
 
   const [form, setForm] = useState({
@@ -53,11 +55,56 @@ export default function Register() {
         return;
       }
 
-      showToast("Account created successfully", "success");
-      navigate("/login");
+      showToast("Account created successfully! Welcome to NovaPay 🚀", "success");
+
+      // Auto-login after registration for seamless user onboarding
+      try {
+        const loginRes = await API.post("/auth/login", { email, password: form.password });
+        if (loginRes.data?.token) {
+          login(loginRes.data.token, loginRes.data.user);
+          navigate("/");
+          return;
+        }
+      } catch {
+        navigate("/login");
+      }
     } catch (err) {
-      console.error(err);
-      const message = err.response?.data?.error || "Unable to create account";
+      console.error("Register Error:", err);
+      const message =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (err.message === "Network Error"
+          ? "Unable to connect to banking server. Please check your network connection."
+          : "Unable to create account. Please try again.");
+      setError(message);
+      showToast(message, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await API.post("/auth/demo");
+      const data = res.data;
+
+      if (data.error) {
+        setError(data.error || "Demo login failed");
+        showToast(data.error || "Demo login failed", "error");
+        return;
+      }
+
+      login(data.token, data.user);
+      showToast("Welcome to NovaPay Demo Tour! 🚀", "success");
+      navigate("/");
+    } catch (err) {
+      console.error("Demo login error:", err);
+      const message =
+        err.response?.data?.error ||
+        "Demo server temporarily busy. Please try again.";
       setError(message);
       showToast(message, "error");
     } finally {
@@ -132,10 +179,27 @@ export default function Register() {
         <button
           disabled={loading}
           className={`mt-6 w-full rounded-xl py-3 font-semibold text-white transition ${
-            loading ? "cursor-not-allowed bg-slate-600" : "bg-linear-to-r from-emerald-500 to-green-500 hover:brightness-110"
+            loading ? "cursor-not-allowed bg-slate-600" : "bg-gradient-to-r from-emerald-500 to-green-500 hover:brightness-110"
           }`}
         >
           {loading ? "Creating account..." : "Register"}
+        </button>
+
+        {/* Instant One-Click Demo Access */}
+        <div className="relative my-5 flex items-center justify-center">
+          <div className="w-full border-t border-slate-800" />
+          <span className="absolute bg-slate-900 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            or explore
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleDemoLogin}
+          disabled={loading}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/40 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-indigo-500/10 py-3 text-xs font-bold text-cyan-300 shadow-md shadow-cyan-500/10 transition hover:bg-cyan-500/20 hover:text-white active:scale-95"
+        >
+          <span>⚡ Instant Demo Access (One-Click Tour)</span>
         </button>
 
         <p className="mt-6 text-center text-sm text-slate-400">
@@ -144,6 +208,12 @@ export default function Register() {
             Login
           </Link>
         </p>
+
+        <div className="mt-4 text-center">
+          <Link to="/" className="text-xs text-slate-500 hover:text-slate-300 transition">
+            ← Back to NovaPay Showcase
+          </Link>
+        </div>
       </form>
     </div>
   );

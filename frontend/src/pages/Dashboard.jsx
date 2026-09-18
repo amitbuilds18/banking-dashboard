@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
 import Cards from "../components/Cards";
 import VirtualCard from "../components/VirtualCard";
@@ -9,18 +10,49 @@ import Charts from "../components/Charts";
 import TransactionsTable from "../components/TransactionsTable";
 import StripeCheckout from "../components/StripeCheckout";
 import NotificationBell from "../components/NotificationBell";
+import AIAssistant from "../components/AIAssistant";
+import {
+  FaShieldAlt,
+  FaArrowRight,
+  FaBolt,
+  FaCreditCard,
+  FaPaperPlane,
+} from "react-icons/fa";
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [copilotTrigger, setCopilotTrigger] = useState(null);
 
   const handleRefreshData = () => {
     setRefreshKey((prev) => prev + 1);
   };
 
+  const handleOpenCopilot = (query = null) => {
+    setCopilotTrigger({ query, timestamp: Date.now() });
+  };
+
+  // Dynamic time-based greeting
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+
+  const formattedDate = new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
   return (
-    <div className="flex min-h-screen bg-slate-950 text-white">
-      <div className={`fixed inset-y-0 left-0 z-40 transition-transform duration-200 md:static md:translate-x-0 ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+    <div className="flex min-h-screen bg-slate-950 text-white selection:bg-cyan-500 selection:text-slate-950">
+      {/* Sidebar Navigation */}
+      <div
+        className={`fixed inset-y-0 left-0 z-40 transition-transform duration-200 md:static md:translate-x-0 ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         <Sidebar onClose={() => setMobileMenuOpen(false)} />
       </div>
 
@@ -28,74 +60,148 @@ export default function Dashboard() {
         <button
           type="button"
           onClick={() => setMobileMenuOpen(false)}
-          className="fixed inset-0 z-30 bg-slate-950/70 md:hidden"
+          className="fixed inset-0 z-30 bg-slate-950/80 backdrop-blur-sm md:hidden"
           aria-label="Close mobile menu"
         />
       )}
 
-      <div className="dashboard-shell flex-1 overflow-y-auto p-6 md:p-8">
+      {/* Main Dashboard Canvas */}
+      <div className="dashboard-shell flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
         <div className="mx-auto max-w-7xl space-y-8">
-          {/* Header */}
-          <header className="flex flex-col gap-4 rounded-3xl border border-slate-700/60 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(true)}
-                className="rounded-xl border border-slate-600 bg-slate-800 p-2 text-lg text-slate-200 md:hidden"
-                aria-label="Open menu"
-              >
-                ☰
-              </button>
+          {/* Executive Header Banner */}
+          <header className="relative overflow-hidden rounded-3xl border border-slate-700/70 bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-slate-950/90 p-6 shadow-2xl backdrop-blur-xl">
+            {/* Glow Orbs */}
+            <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 left-1/3 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
 
-              <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-cyan-400">NovaPay Neo-Bank</p>
-                <h1 className="mt-1 text-3xl font-black text-white">Financial HQ</h1>
+            <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              {/* Left Column: Greeting & Status */}
+              <div className="flex items-start gap-4">
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="rounded-2xl border border-slate-700 bg-slate-800/80 p-2.5 text-slate-300 transition hover:bg-slate-700 hover:text-white md:hidden"
+                  aria-label="Open menu"
+                >
+                  ☰
+                </button>
+
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-400">
+                      NovaPay Financial HQ
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                      Live Network
+                    </span>
+                  </div>
+
+                  <h1 className="mt-1 text-2xl font-black text-white sm:text-3xl">
+                    {greeting},{" "}
+                    <span className="bg-gradient-to-r from-cyan-300 via-blue-300 to-indigo-300 bg-clip-text text-transparent">
+                      {user?.name ? user.name.split(" ")[0] : "Commander"}
+                    </span>
+                  </h1>
+
+                  <p className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                    <span>{formattedDate}</span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1 text-slate-400">
+                      <FaShieldAlt className="text-emerald-400" /> 256-Bit SSL Protected
+                    </span>
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                to="/send-money"
-                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-blue-500/20 transition hover:brightness-110"
-              >
-                💸 Send Money
-              </Link>
-              <Link
-                to="/transactions"
-                className="rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-700 hover:text-white"
-              >
-                📄 Statements
-              </Link>
-              <NotificationBell />
+              {/* Right Column: Executive Action Shortcuts */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => handleOpenCopilot()}
+                  className="flex items-center gap-2 rounded-2xl border border-cyan-500/40 bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-indigo-500/15 px-4 py-2.5 text-xs font-bold text-cyan-300 shadow-lg shadow-cyan-500/10 backdrop-blur-md transition hover:border-cyan-400 hover:bg-cyan-500/25 hover:text-white active:scale-95"
+                >
+                  <FaBolt className="text-cyan-400" />
+                  <span>AI Copilot</span>
+                </button>
+
+                <Link
+                  to="/send-money"
+                  className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-500/25 transition hover:brightness-110 active:scale-95"
+                >
+                  <FaPaperPlane className="text-xs" />
+                  <span>Send Money</span>
+                </Link>
+
+                <Link
+                  to="/payment"
+                  className="flex items-center gap-2 rounded-2xl border border-slate-700/80 bg-slate-800/80 px-3.5 py-2.5 text-xs font-semibold text-slate-200 backdrop-blur-md transition hover:bg-slate-700 hover:text-white"
+                >
+                  <FaCreditCard className="text-xs text-amber-400" />
+                  <span>Top-Up</span>
+                </Link>
+
+                <Link
+                  to="/transactions"
+                  className="rounded-2xl border border-slate-700/80 bg-slate-800/80 px-3.5 py-2.5 text-xs font-semibold text-slate-200 backdrop-blur-md transition hover:bg-slate-700 hover:text-white"
+                >
+                  Statements
+                </Link>
+
+                <div className="ml-1">
+                  <NotificationBell />
+                </div>
+              </div>
             </div>
           </header>
 
-          {/* Quick Metrics Cards */}
-          <Cards key={`cards-${refreshKey}`} />
+          {/* Section 1: Executive KPI Cards & Velocity */}
+          <section>
+            <Cards key={`cards-${refreshKey}`} />
+          </section>
 
-          {/* 3D Virtual Card + AI Financial Insights Split Row */}
-          <div className="grid gap-6 lg:grid-cols-12">
-            <div className="lg:col-span-5">
-              <VirtualCard />
+          {/* Section 2: 3D Virtual Card + AI Financial Insights Split Row */}
+          <section>
+            <div className="grid gap-6 lg:grid-cols-12">
+              <div className="lg:col-span-5">
+                <VirtualCard />
+              </div>
+              <div className="lg:col-span-7">
+                <SmartInsights
+                  key={`insights-${refreshKey}`}
+                  onOpenCopilot={handleOpenCopilot}
+                />
+              </div>
             </div>
-            <div className="lg:col-span-7">
-              <SmartInsights key={`insights-${refreshKey}`} />
-            </div>
-          </div>
+          </section>
 
-          {/* Smart Savings Vaults with Round-Up */}
-          <SavingsVaults onBalanceUpdate={handleRefreshData} />
+          {/* Section 3: Smart Savings Vaults with Round-Up */}
+          <section>
+            <SavingsVaults onBalanceUpdate={handleRefreshData} />
+          </section>
 
-          {/* Instant Stripe Wallet Recharge */}
-          <StripeCheckout />
+          {/* Section 4: Instant Stripe Wallet Recharge */}
+          <section>
+            <StripeCheckout />
+          </section>
 
-          {/* Charts & Analytics */}
-          <Charts key={`charts-${refreshKey}`} />
+          {/* Section 5: Charts & Financial Analytics */}
+          <section>
+            <Charts key={`charts-${refreshKey}`} />
+          </section>
 
-          {/* Transactions Table with Badges & Icons */}
-          <TransactionsTable key={`tx-${refreshKey}`} />
+          {/* Section 6: Transactions Table with Badges & Icons */}
+          <section>
+            <TransactionsTable key={`tx-${refreshKey}`} />
+          </section>
         </div>
       </div>
+
+      {/* Interactive AI Financial Copilot Drawer/Modal */}
+      <AIAssistant
+        externalTrigger={copilotTrigger}
+        onTriggerHandled={() => setCopilotTrigger(null)}
+      />
     </div>
   );
 }

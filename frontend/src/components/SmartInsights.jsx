@@ -1,52 +1,94 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
-import { FaShieldAlt, FaFire, FaHourglassHalf, FaLightbulb, FaExclamationTriangle } from "react-icons/fa";
+import {
+  FaShieldAlt,
+  FaFire,
+  FaHourglassHalf,
+  FaLightbulb,
+  FaExclamationTriangle,
+  FaRobot,
+  FaMagic,
+} from "react-icons/fa";
 
-export default function SmartInsights() {
+export default function SmartInsights({ onOpenCopilot }) {
   const [insights, setInsights] = useState(null);
+  const [aiSummary, setAiSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchInsights = async () => {
+    let isMounted = true;
+
+    const fetchData = async () => {
       try {
-        const res = await API.get("/transactions/insights");
-        setInsights(res.data);
+        const [insightsRes, summaryRes] = await Promise.allSettled([
+          API.get("/transactions/insights"),
+          API.get("/ai/summary"),
+        ]);
+
+        if (!isMounted) return;
+
+        if (insightsRes.status === "fulfilled") {
+          setInsights(insightsRes.value.data);
+        }
+
+        if (summaryRes.status === "fulfilled") {
+          setAiSummary(summaryRes.value.data?.summary);
+        }
       } catch (err) {
-        console.error("Error loading insights:", err);
+        console.error("Error loading smart insights:", err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
-    fetchInsights();
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (loading) {
-    return <div className="h-44 animate-pulse rounded-3xl border border-slate-800 bg-slate-900/60 p-6" />;
+    return (
+      <div className="h-64 animate-pulse rounded-3xl border border-slate-800 bg-slate-900/60 p-6" />
+    );
   }
 
   if (!insights) return null;
 
   return (
     <div className="rounded-3xl border border-slate-700/80 bg-slate-900/80 p-6 shadow-2xl backdrop-blur-xl">
-      <div className="mb-5 flex items-center justify-between">
+      {/* Top Header */}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-lg text-white shadow-md shadow-indigo-500/20">
             ⚡
           </div>
           <div>
             <span className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-400">
-              Financial Co-Pilot
+              Financial Intelligence
             </span>
-            <h3 className="text-xl font-bold text-white">Smart Intelligence & Risk Guard</h3>
+            <h3 className="text-xl font-bold text-white">Smart Co-Pilot & Risk Guard</h3>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-bold text-indigo-300">
-          <FaShieldAlt /> Health: {insights.healthGrade}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-bold text-indigo-300">
+            <FaShieldAlt /> Health: {insights.healthGrade}
+          </div>
+          {onOpenCopilot && (
+            <button
+              type="button"
+              onClick={() => onOpenCopilot()}
+              className="flex items-center gap-1.5 rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-300 transition hover:bg-cyan-500/20 hover:text-white"
+            >
+              <FaRobot className="text-xs" /> Ask Copilot
+            </button>
+          )}
         </div>
       </div>
 
+      {/* Metrics Row: Runway, Burn Rate, Health Score */}
       <div className="grid gap-4 sm:grid-cols-3">
         {/* Metric 1: Runway */}
         <div className="rounded-2xl border border-slate-700/70 bg-slate-800/60 p-4">
@@ -100,11 +142,48 @@ export default function SmartInsights() {
         </div>
       </div>
 
-      {/* AI Advice Note */}
-      <div className="mt-4 flex items-start gap-3 rounded-2xl border border-blue-500/30 bg-blue-500/10 p-3.5 text-xs text-blue-200">
+      {/* Dynamic AI Spending Digest */}
+      {aiSummary && (
+        <div className="mt-4 rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-slate-800/90 via-slate-850/90 to-slate-900/90 p-4 shadow-inner">
+          <div className="flex items-center justify-between mb-2">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-cyan-300">
+              <FaMagic className="text-cyan-400" /> AI Spending Digest
+            </span>
+            <span className="text-[10px] uppercase tracking-wider text-slate-400">
+              Verified Analysis
+            </span>
+          </div>
+          <div className="space-y-1.5 text-xs text-slate-300">
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-cyan-400 font-bold">•</span>
+              <p>
+                <strong className="text-white">Cash Flow: </strong>
+                {aiSummary.overview}
+              </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-indigo-400 font-bold">•</span>
+              <p>
+                <strong className="text-white">Spending Peak: </strong>
+                {aiSummary.topCategory}
+              </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="shrink-0 text-emerald-400 font-bold">•</span>
+              <p>
+                <strong className="text-white">Optimization: </strong>
+                {aiSummary.actionableTip}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Algorithmic Advice Note */}
+      <div className="mt-3 flex items-start gap-3 rounded-2xl border border-blue-500/30 bg-blue-500/10 p-3.5 text-xs text-blue-200">
         <FaLightbulb className="mt-0.5 shrink-0 text-base text-blue-300" />
         <div className="leading-relaxed">
-          <span className="font-semibold text-white">Algorithmic Advice: </span>
+          <span className="font-semibold text-white">Algorithmic Baseline: </span>
           {insights.smartAdvice}
         </div>
       </div>

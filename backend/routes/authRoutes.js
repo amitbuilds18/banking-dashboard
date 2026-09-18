@@ -161,4 +161,62 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// DEMO LOGIN (One-Click Tour for visitors & recruiters)
+router.post("/demo", async (req, res) => {
+  try {
+    const demoEmail = "demo@novapay.bank";
+
+    let userRes = await pool.query("SELECT * FROM users WHERE email = $1", [demoEmail]);
+    let demoUser = userRes.rows[0];
+
+    // If demo user does not exist yet, provision one with rich starter data
+    if (!demoUser) {
+      const hashed = await bcrypt.hash("Demo@NovaPay123", 10);
+      const insertUser = await pool.query(
+        "INSERT INTO users (name, email, password, balance, phone) VALUES ($1,$2,$3,$4,$5) RETURNING *",
+        ["Demo Commander", demoEmail, hashed, 78500, "+91 98765 43210"]
+      );
+      demoUser = insertUser.rows[0];
+
+      // Add starter transactions for rich visual charts and insights
+      await pool.query(
+        `INSERT INTO transactions (name, amount, status, user_id, receiver_email) VALUES
+         ('Salary Inflow', 50000, 'success', $1, NULL),
+         ('Dining & Gourmet', -3400, 'success', $1, NULL),
+         ('Tech & Subscriptions', -1499, 'success', $1, NULL),
+         ('Supermarket Grocery', -4800, 'success', $1, NULL),
+         ('Transfer Sent', -5000, 'success', $1, 'alex@sample.com'),
+         ('Spare Change (Emergency Fund)', -50, 'success', $1, NULL)`,
+        [demoUser.id]
+      );
+
+      // Add starter savings vault
+      await pool.query(
+        `INSERT INTO vaults (user_id, name, target_amount, current_amount, icon, color, is_roundup_target)
+         VALUES ($1, 'Emergency Fund', 100000, 35000, '🛡️', 'from-blue-500 to-indigo-600', true)
+         ON CONFLICT DO NOTHING`,
+        [demoUser.id]
+      );
+    }
+
+    const token = jwt.sign(
+      { id: demoUser.id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE || "7d" }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: demoUser.id,
+        name: demoUser.name,
+        email: demoUser.email,
+      },
+    });
+  } catch (err) {
+    console.error("Demo login error:", err);
+    res.status(500).json({ error: err.message || "Failed to create demo session" });
+  }
+});
+
 export default router;

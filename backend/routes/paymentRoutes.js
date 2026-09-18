@@ -5,7 +5,9 @@ import protect from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
 // ===========================================
@@ -17,6 +19,10 @@ router.post(
   protect,
   async (req, res) => {
     try {
+      if (!stripe) {
+        return res.status(500).json({ error: "Stripe is not configured on this server." });
+      }
+
       const rawAmount = Number(req.body.amount) || 500;
       const amount = Math.max(100, Math.min(500000, Math.floor(rawAmount)));
 
