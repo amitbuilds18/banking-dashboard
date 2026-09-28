@@ -10,6 +10,7 @@ export default function SendMoney() {
   const [amount, setAmount] = useState("");
   const [roundUp, setRoundUp] = useState(true);
   const [securityPin, setSecurityPin] = useState("1234");
+  const [showPin, setShowPin] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -27,8 +28,8 @@ export default function SendMoney() {
   };
 
   const handleConfirmSend = async () => {
-    if (securityPin.length < 4) {
-      showToast("Please enter your 4-digit Security PIN", "error");
+    if (!securityPin || securityPin.trim().length !== 4) {
+      showToast("Please enter your 4-digit Security MPIN", "error");
       return;
     }
 
@@ -39,6 +40,7 @@ export default function SendMoney() {
         receiver_email: receiverEmail.trim().toLowerCase(),
         amount: numericAmount,
         round_up: roundUp,
+        mpin: securityPin.trim(),
       });
 
       if (res.data?.error) {
@@ -51,7 +53,11 @@ export default function SendMoney() {
       navigate("/");
     } catch (err) {
       console.error(err);
-      showToast(err.response?.data?.error || "Transfer failed", "error");
+      const errMsg = err.response?.data?.error || "Transfer failed";
+      showToast(errMsg, "error");
+      if (errMsg.toLowerCase().includes("mpin") || errMsg.toLowerCase().includes("pin")) {
+        setSecurityPin("");
+      }
     } finally {
       setLoading(false);
     }
@@ -181,25 +187,44 @@ export default function SendMoney() {
             </div>
 
             <div className="mb-5">
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs text-slate-300">
-                  🔐 4-Digit Security PIN (ATM PIN)
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-slate-200">
+                  🔐 4-Digit Security MPIN
                 </label>
-                <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                  PIN: 1234
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPin((prev) => !prev)}
+                    className="text-[11px] text-cyan-400 hover:underline"
+                  >
+                    {showPin ? "Hide PIN" : "Show PIN"}
+                  </button>
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                    Default: 1234
+                  </span>
+                </div>
               </div>
-              <input
-                type="password"
-                maxLength={4}
-                value={securityPin}
-                onChange={(e) => setSecurityPin(e.target.value)}
-                placeholder="1234"
-                className="w-full tracking-[0.5em] text-center rounded-xl border border-slate-700 bg-slate-800 py-2.5 font-mono text-lg text-white outline-none focus:border-cyan-400"
-              />
-              <p className="mt-1.5 text-[11px] text-slate-400 text-center">
-                Koi OTP nahi aayega — demo ke liye default PIN <strong className="text-cyan-300">1234</strong> pehle se bhara hua hai.
-              </p>
+              <div className="relative">
+                <input
+                  type={showPin ? "text" : "password"}
+                  maxLength={4}
+                  value={securityPin}
+                  onChange={(e) => setSecurityPin(e.target.value.replace(/\D/g, ""))}
+                  placeholder="••••"
+                  className="w-full tracking-[0.6em] text-center rounded-xl border border-slate-700 bg-slate-800 py-3 font-mono text-xl text-white outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition"
+                  autoFocus
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Enter 4-digit PIN to release funds</span>
+                <button
+                  type="button"
+                  onClick={() => navigate("/profile")}
+                  className="text-cyan-400 hover:text-cyan-300 font-medium hover:underline"
+                >
+                  Change MPIN in Profile →
+                </button>
+              </div>
             </div>
 
             <div className="flex gap-3">

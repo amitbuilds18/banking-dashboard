@@ -71,6 +71,66 @@ router.put("/profile", protect, async (req, res) => {
   }
 });
 
+// ===========================================
+// MPIN STATUS & MANAGEMENT
+// ===========================================
+
+router.get("/mpin-status", protect, async (req, res) => {
+  try {
+    const result = await pool.query("SELECT mpin FROM users WHERE id = $1", [req.user.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const hasCustomMpin = Boolean(result.rows[0].mpin);
+    res.json({
+      hasMpin: hasCustomMpin,
+      defaultPinHint: "1234",
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/set-mpin", protect, async (req, res) => {
+  try {
+    const { currentMpin, newMpin } = req.body;
+
+    if (!newMpin || !/^\d{4}$/.test(String(newMpin).trim())) {
+      return res.status(400).json({ error: "New MPIN must be exactly 4 numeric digits (e.g. 1234)" });
+    }
+
+    const userRes = await pool.query("SELECT id, mpin FROM users WHERE id = $1", [req.user.id]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = userRes.rows[0];
+
+    // If an existing MPIN is set, verify currentMpin
+    if (user.mpin) {
+      if (!currentMpin) {
+        return res.status(400).json({ error: "Current 4-digit MPIN is required" });
+      }
+      const isMatch = await bcrypt.compare(String(currentMpin).trim(), user.mpin);
+      if (!isMatch) {
+        return res.status(401).json({ error: "Current MPIN is incorrect" });
+      }
+    } else {
+      // If no MPIN was set yet, require default 1234 if currentMpin is passed
+      if (currentMpin && String(currentMpin).trim() !== "1234") {
+        return res.status(401).json({ error: "Current MPIN does not match default (1234)" });
+      }
+    }
+
+    const hashedMpin = await bcrypt.hash(String(newMpin).trim(), 10);
+    await pool.query("UPDATE users SET mpin = $1 WHERE id = $2", [hashedMpin, req.user.id]);
+
+    res.json({ message: "4-Digit Security MPIN updated successfully! 🔐" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // REGISTER
 router.post("/register", async (req, res) => {
   try {
@@ -197,6 +257,12 @@ router.post("/demo", async (req, res) => {
          ON CONFLICT DO NOTHING`,
         [demoUser.id]
       );
+    }
+
+    // Ensure demo user has default 4-digit MPIN (1234)
+    if (!demoUser.mpin) {
+      const hashedMpin = await bcrypt.hash("1234", 10);
+      await pool.query("UPDATE users SET mpin = $1 WHERE id = $2", [hashedMpin, demoUser.id]);
     }
 
     const token = jwt.sign(

@@ -16,6 +16,13 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // MPIN Management States
+  const [hasCustomMpin, setHasCustomMpin] = useState(false);
+  const [currentMpin, setCurrentMpin] = useState("");
+  const [newMpin, setNewMpin] = useState("");
+  const [confirmMpin, setConfirmMpin] = useState("");
+  const [updatingMpin, setUpdatingMpin] = useState(false);
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -26,8 +33,18 @@ export default function Profile() {
           return;
         }
 
-        const res = await API.get("/auth/profile");
-        setUser(res.data);
+        const [profileRes, mpinRes] = await Promise.allSettled([
+          API.get("/auth/profile"),
+          API.get("/auth/mpin-status"),
+        ]);
+
+        if (profileRes.status === "fulfilled" && profileRes.value.data) {
+          setUser(profileRes.value.data);
+        }
+
+        if (mpinRes.status === "fulfilled" && mpinRes.value.data) {
+          setHasCustomMpin(Boolean(mpinRes.value.data.hasMpin));
+        }
       } catch (err) {
         console.error(err);
         showToast("Unable to load profile", "error");
@@ -45,6 +62,39 @@ export default function Profile() {
       ...user,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleUpdateMpin = async (e) => {
+    e.preventDefault();
+
+    if (!newMpin || !/^\d{4}$/.test(newMpin.trim())) {
+      showToast("New MPIN must be exactly 4 numeric digits", "error");
+      return;
+    }
+
+    if (newMpin !== confirmMpin) {
+      showToast("New MPIN and Confirm MPIN do not match", "error");
+      return;
+    }
+
+    setUpdatingMpin(true);
+    try {
+      const res = await API.post("/auth/set-mpin", {
+        currentMpin: currentMpin.trim() || undefined,
+        newMpin: newMpin.trim(),
+      });
+
+      showToast(res.data?.message || "MPIN updated successfully! 🔐", "success");
+      setHasCustomMpin(true);
+      setCurrentMpin("");
+      setNewMpin("");
+      setConfirmMpin("");
+    } catch (err) {
+      console.error(err);
+      showToast(err.response?.data?.error || "Failed to update MPIN", "error");
+    } finally {
+      setUpdatingMpin(false);
+    }
   };
 
   const handleSave = async () => {
@@ -150,6 +200,97 @@ export default function Profile() {
             >
               {saving ? "Saving Changes..." : "Save Changes"}
             </button>
+
+            {/* 4-Digit Security MPIN Management */}
+            <div className="mt-10 rounded-2xl border border-slate-700/80 bg-slate-800/50 p-6 shadow-xl">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-lg shadow-md shadow-cyan-500/20">
+                    🔐
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">4-Digit Security MPIN</h3>
+                    <p className="text-xs text-slate-400">Used to authorize peer-to-peer transfers and withdrawals</p>
+                  </div>
+                </div>
+
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+                  hasCustomMpin
+                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                    : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                }`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${hasCustomMpin ? "bg-emerald-400" : "bg-amber-400"}`} />
+                  {hasCustomMpin ? "Custom PIN Active" : "Default PIN Active (1234)"}
+                </span>
+              </div>
+
+              <form onSubmit={handleUpdateMpin} className="mt-6 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-300">
+                      Current MPIN
+                    </label>
+                    <input
+                      type="password"
+                      maxLength={4}
+                      placeholder={hasCustomMpin ? "••••" : "1234"}
+                      value={currentMpin}
+                      onChange={(e) => setCurrentMpin(e.target.value.replace(/\D/g, ""))}
+                      className="w-full tracking-[0.3em] text-center rounded-xl border border-slate-700 bg-slate-900 py-2.5 font-mono text-sm text-white outline-none focus:border-cyan-400"
+                    />
+                    <span className="mt-1 block text-[10px] text-slate-400">
+                      {hasCustomMpin ? "Your current 4 digits" : "Default: 1234"}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-300">
+                      New MPIN
+                    </label>
+                    <input
+                      type="password"
+                      maxLength={4}
+                      placeholder="••••"
+                      value={newMpin}
+                      onChange={(e) => setNewMpin(e.target.value.replace(/\D/g, ""))}
+                      className="w-full tracking-[0.3em] text-center rounded-xl border border-slate-700 bg-slate-900 py-2.5 font-mono text-sm text-white outline-none focus:border-cyan-400"
+                      required
+                    />
+                    <span className="mt-1 block text-[10px] text-slate-400">
+                      4 numeric digits
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-300">
+                      Confirm New MPIN
+                    </label>
+                    <input
+                      type="password"
+                      maxLength={4}
+                      placeholder="••••"
+                      value={confirmMpin}
+                      onChange={(e) => setConfirmMpin(e.target.value.replace(/\D/g, ""))}
+                      className="w-full tracking-[0.3em] text-center rounded-xl border border-slate-700 bg-slate-900 py-2.5 font-mono text-sm text-white outline-none focus:border-cyan-400"
+                      required
+                    />
+                    <span className="mt-1 block text-[10px] text-slate-400">
+                      Re-type 4 digits
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={updatingMpin || newMpin.length !== 4 || confirmMpin.length !== 4}
+                    className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-2.5 text-xs font-semibold text-white shadow-md shadow-cyan-500/20 transition hover:brightness-110 disabled:opacity-50"
+                  >
+                    {updatingMpin ? "Updating PIN..." : "Update Security MPIN"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </>
         )}
       </div>

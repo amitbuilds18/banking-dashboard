@@ -38,6 +38,7 @@ export async function initDatabase() {
 
     await pool.query(`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20) DEFAULT '';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS mpin VARCHAR(255);
       ALTER TABLE transactions ADD COLUMN IF NOT EXISTS stripe_session_id VARCHAR(255);
     `);
 

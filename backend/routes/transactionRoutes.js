@@ -1,4 +1,5 @@
 import express from "express";
+import bcrypt from "bcrypt";
 import pool from "../db.js";
 import protect from "../middleware/authMiddleware.js";
 
@@ -75,7 +76,7 @@ router.post("/send", protect, async (req, res) => {
 
   try {
 
-    const { receiver_email, amount } = req.body;
+    const { receiver_email, amount, mpin } = req.body;
 
     const senderId = req.user.id;
 
@@ -84,6 +85,12 @@ router.post("/send", protect, async (req, res) => {
     if (!receiver_email || !Number.isFinite(numericAmount) || numericAmount <= 0) {
       return res.status(400).json({
         error: "Receiver email and a positive amount are required"
+      });
+    }
+
+    if (!mpin || !/^\d{4}$/.test(String(mpin).trim())) {
+      return res.status(400).json({
+        error: "4-Digit Security MPIN is required (default: 1234)"
       });
     }
 
@@ -105,6 +112,30 @@ router.post("/send", protect, async (req, res) => {
       return res.status(404).json({
         error: "Sender not found"
       });
+    }
+
+    const senderData = sender.rows[0];
+
+    // Cryptographic MPIN Verification
+    if (senderData.mpin) {
+      const isMpinValid = await bcrypt.compare(String(mpin).trim(), senderData.mpin);
+      if (!isMpinValid) {
+        await client.query("ROLLBACK");
+        return res.status(401).json({
+          error: "Incorrect 4-digit Security MPIN. Transfer rejected."
+        });
+      }
+    } else {
+      // If user hasn't set a custom MPIN yet, check default '1234'
+      if (String(mpin).trim() !== "1234") {
+        await client.query("ROLLBACK");
+        return res.status(401).json({
+          error: "Default Security MPIN is 1234. Please enter 1234 or configure your custom PIN in Profile."
+        });
+      }
+      // Auto-hash default 1234 for persistence
+      const hashedDefault = await bcrypt.hash("1234", 10);
+      await client.query("UPDATE users SET mpin = $1 WHERE id = $2", [hashedDefault, senderId]);
     }
 
     const normalizedReceiverEmail = receiver_email.trim().toLowerCase();
