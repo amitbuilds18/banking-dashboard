@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaQrcode, FaCamera } from "react-icons/fa";
 import API from "../services/api";
 import { useToast } from "../context/ToastContext";
+import QRScannerModal from "../components/QRScannerModal";
+import MyQRCodeModal from "../components/MyQRCodeModal";
 
 export default function SendMoney() {
   const navigate = useNavigate();
@@ -12,7 +15,19 @@ export default function SendMoney() {
   const [securityPin, setSecurityPin] = useState("1234");
   const [showPin, setShowPin] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [showMyQr, setShowMyQr] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored) setCurrentUser(JSON.parse(stored));
+    } catch (e) {
+      console.warn("User parse error:", e);
+    }
+  }, []);
 
   const numericAmount = Number(amount);
   const nextFifty = Math.ceil((numericAmount || 0) / 50) * 50;
@@ -83,7 +98,27 @@ export default function SendMoney() {
 
         <form onSubmit={handleOpenReview} className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm text-slate-300">Recipient Email</label>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm text-slate-300">Recipient Email</label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowScanner(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-1 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/20 transition"
+                  title="Scan recipient's QR code"
+                >
+                  <FaCamera className="text-[10px]" /> Scan QR
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowMyQr(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 border border-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition"
+                  title="Show my personal receiving QR code"
+                >
+                  <FaQrcode className="text-[10px]" /> My QR
+                </button>
+              </div>
+            </div>
             <input
               type="email"
               value={receiverEmail}
@@ -247,6 +282,22 @@ export default function SendMoney() {
           </div>
         </div>
       )}
+
+      {/* QR Code Scanner Modal */}
+      <QRScannerModal
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScanSuccess={(scannedEmail) => {
+          setReceiverEmail(scannedEmail);
+        }}
+      />
+
+      {/* My Personal QR Code Modal */}
+      <MyQRCodeModal
+        isOpen={showMyQr}
+        onClose={() => setShowMyQr(false)}
+        user={currentUser}
+      />
     </div>
   );
 }

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaQrcode } from "react-icons/fa";
 import API from "../services/api";
 import { useToast } from "../context/ToastContext";
+import MyQRCodeModal from "../components/MyQRCodeModal";
 
 export default function Profile() {
   const navigate = useNavigate(); 
@@ -22,6 +24,9 @@ export default function Profile() {
   const [newMpin, setNewMpin] = useState("");
   const [confirmMpin, setConfirmMpin] = useState("");
   const [updatingMpin, setUpdatingMpin] = useState(false);
+
+  // QR Modal State
+  const [showMyQr, setShowMyQr] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -291,8 +296,40 @@ export default function Profile() {
                 </div>
               </form>
             </div>
+
+            {/* Personal Payment QR Code Card */}
+            <div className="mt-6 rounded-2xl border border-slate-700/80 bg-slate-800/50 p-6 shadow-xl">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-lg shadow-md shadow-emerald-500/20">
+                    <FaQrcode className="text-white text-base" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Personal Receiving QR Code</h3>
+                    <p className="text-xs text-slate-400">
+                      Show or share your unique QR code to receive funds directly into your wallet
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowMyQr(true)}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-xs font-semibold text-white shadow-md shadow-emerald-500/20 hover:brightness-110 transition"
+                >
+                  <FaQrcode /> View & Download QR
+                </button>
+              </div>
+            </div>
           </>
         )}
+
+        {/* My QR Code Modal */}
+        <MyQRCodeModal
+          isOpen={showMyQr}
+          onClose={() => setShowMyQr(false)}
+          user={user}
+        />
       </div>
     </div>
   );
