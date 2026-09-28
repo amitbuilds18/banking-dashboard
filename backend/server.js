@@ -20,6 +20,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import cardRoutes from "./routes/cardRoutes.js";
 import vaultRoutes from "./routes/vaultRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import billRoutes from "./routes/billRoutes.js";
 import { initDatabase } from "./initDb.js";
 
 // Initialize database schema tables on startup
@@ -80,6 +81,9 @@ app.use("/api/vaults", vaultRoutes);
 
 // 🤖 AI COPILOT & INSIGHTS ROUTES
 app.use("/api/ai", aiRoutes);
+
+// ⚡ UTILITY BILL & RECHARGE ROUTES
+app.use("/api/bills", billRoutes);
 
 // HEALTH CHECK ROUTE (Verifies Neon PostgreSQL live connection & latency)
 app.get("/api/health", async (req, res) => {

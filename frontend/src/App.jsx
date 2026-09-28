@@ -13,6 +13,7 @@ const StripeCheckout = lazy(() => import("./components/StripeCheckout"));
 const SendMoney = lazy(() => import("./pages/SendMoney"));
 const Success = lazy(() => import("./pages/Success"));
 const Profile = lazy(() => import("./pages/Profile"));
+const BillPay = lazy(() => import("./pages/BillPay"));
 
 /**
  * Intelligently routes the root URL:
@@ -105,6 +106,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/bills"
+            element={
+              <ProtectedRoute>
+                <BillPay />
               </ProtectedRoute>
             }
           />

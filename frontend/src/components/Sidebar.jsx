@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import {
   FaHome,
   FaPaperPlane,
+  FaBolt,
   FaReceipt,
   FaWallet,
   FaUser,
@@ -42,6 +43,12 @@ export default function Sidebar({ onClose }) {
       icon: FaPaperPlane,
       path: "/send-money",
       badge: "Instant",
+    },
+    {
+      name: "Pay Bills",
+      icon: FaBolt,
+      path: "/bills",
+      badge: "Utility",
     },
     {
       name: "Statements",

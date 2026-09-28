@@ -134,6 +134,14 @@ export default function Dashboard() {
                 </Link>
 
                 <Link
+                  to="/bills"
+                  className="flex items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs font-semibold text-amber-300 backdrop-blur-md transition hover:bg-amber-500/20 hover:text-white"
+                >
+                  <FaBolt className="text-xs text-amber-400" />
+                  <span>Pay Bills</span>
+                </Link>
+
+                <Link
                   to="/payment"
                   className="flex items-center gap-2 rounded-2xl border border-slate-700/80 bg-slate-800/80 px-3.5 py-2.5 text-xs font-semibold text-slate-200 backdrop-blur-md transition hover:bg-slate-700 hover:text-white"
                 >
@@ -158,6 +166,51 @@ export default function Dashboard() {
           {/* Section 1: Executive KPI Cards & Velocity */}
           <section>
             <Cards key={`cards-${refreshKey}`} />
+          </section>
+
+          {/* Quick Utility Hub */}
+          <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-5 backdrop-blur-xl">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-400">
+                  Quick Utility Hub
+                </span>
+                <h3 className="text-base font-bold text-white">Bill Payments & Recharges</h3>
+              </div>
+              <Link
+                to="/bills"
+                className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition"
+              >
+                View All Categories →
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {[
+                { name: "Electricity", icon: "⚡", desc: "Tata / Adani", color: "from-amber-500 to-yellow-600" },
+                { name: "Mobile", icon: "📱", desc: "Jio / Airtel 5G", color: "from-blue-500 to-cyan-600" },
+                { name: "Broadband", icon: "🌐", desc: "JioFiber / Xstream", color: "from-emerald-500 to-teal-600" },
+                { name: "OTT & Stream", icon: "🎬", desc: "Netflix / Prime", color: "from-rose-500 to-pink-600" },
+                { name: "LPG Gas", icon: "🔥", desc: "Indane / Bharat", color: "from-orange-500 to-red-600" },
+              ].map((item) => (
+                <Link
+                  key={item.name}
+                  to="/bills"
+                  className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/80 p-3 hover:border-cyan-500/40 hover:bg-slate-800/80 transition group"
+                >
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${item.color} text-lg shadow-md group-hover:scale-105 transition`}
+                  >
+                    {item.icon}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-white group-hover:text-cyan-300 transition truncate">
+                      {item.name}
+                    </h4>
+                    <p className="text-[10px] text-slate-400 truncate">{item.desc}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </section>
 
           {/* Section 2: 3D Virtual Card + AI Financial Insights Split Row */}
