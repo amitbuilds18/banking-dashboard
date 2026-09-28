@@ -1,9 +1,16 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, ".env") });
 dotenv.config();
 
+import pool from "./db.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
@@ -73,6 +80,27 @@ app.use("/api/vaults", vaultRoutes);
 
 // 🤖 AI COPILOT & INSIGHTS ROUTES
 app.use("/api/ai", aiRoutes);
+
+// HEALTH CHECK ROUTE (Verifies Neon PostgreSQL live connection & latency)
+app.get("/api/health", async (req, res) => {
+  try {
+    const start = Date.now();
+    await pool.query("SELECT 1");
+    const latencyMs = Date.now() - start;
+    res.json({
+      status: "healthy",
+      database: "Neon PostgreSQL Connected",
+      latencyMs,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: "degraded",
+      database: "Connection Failed",
+      error: err.message,
+    });
+  }
+});
 
 // TEST ROUTE
 app.get("/", (req, res) => {
