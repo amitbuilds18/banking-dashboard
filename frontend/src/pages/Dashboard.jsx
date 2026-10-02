@@ -11,12 +11,18 @@ import TransactionsTable from "../components/TransactionsTable";
 import StripeCheckout from "../components/StripeCheckout";
 import NotificationBell from "../components/NotificationBell";
 import AIAssistant from "../components/AIAssistant";
+import QuickPayRibbon from "../components/QuickPayRibbon";
 import {
   FaShieldAlt,
   FaArrowRight,
   FaBolt,
   FaCreditCard,
   FaPaperPlane,
+  FaPiggyBank,
+  FaHandHoldingUsd,
+  FaGift,
+  FaCoins,
+  FaFileInvoiceDollar,
 } from "react-icons/fa";
 
 export default function Dashboard() {
@@ -150,6 +156,54 @@ export default function Dashboard() {
                 </Link>
 
                 <Link
+                  to="/fixed-deposits"
+                  className="flex items-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/15 px-3.5 py-2.5 text-xs font-bold text-amber-300 backdrop-blur-md transition hover:bg-amber-500/25 hover:text-white active:scale-95"
+                >
+                  <FaPiggyBank className="text-xs text-amber-400" />
+                  <span>FD (8.5%)</span>
+                </Link>
+
+                <Link
+                  to="/loans"
+                  className="flex items-center gap-2 rounded-2xl border border-emerald-500/40 bg-emerald-500/15 px-3.5 py-2.5 text-xs font-bold text-emerald-300 backdrop-blur-md transition hover:bg-emerald-500/25 hover:text-white active:scale-95"
+                >
+                  <FaHandHoldingUsd className="text-xs text-emerald-400" />
+                  <span>Loans (₹5L)</span>
+                </Link>
+
+                <Link
+                  to="/rewards"
+                  className="flex items-center gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/15 px-3.5 py-2.5 text-xs font-bold text-amber-300 backdrop-blur-md transition hover:bg-amber-500/25 hover:text-white active:scale-95"
+                >
+                  <FaGift className="text-xs text-amber-400" />
+                  <span>Rewards</span>
+                </Link>
+
+                <Link
+                  to="/gold"
+                  className="flex items-center gap-2 rounded-2xl border border-yellow-500/40 bg-yellow-500/15 px-3.5 py-2.5 text-xs font-bold text-yellow-300 backdrop-blur-md transition hover:bg-yellow-500/25 hover:text-white active:scale-95"
+                >
+                  <FaCoins className="text-xs text-yellow-400" />
+                  <span>Gold (24K)</span>
+                </Link>
+
+                <Link
+                  to="/credit-cards"
+                  className="flex items-center gap-2 rounded-2xl border border-indigo-500/40 bg-indigo-500/15 px-3.5 py-2.5 text-xs font-bold text-indigo-300 backdrop-blur-md transition hover:bg-indigo-500/25 hover:text-white active:scale-95"
+                >
+                  <FaCreditCard className="text-xs text-indigo-400" />
+                  <span>Credit Cards</span>
+                </Link>
+
+                <Link
+                  to="/tax-certificates"
+                  className="flex items-center gap-2 rounded-2xl border border-teal-500/40 bg-teal-500/15 px-3.5 py-2.5 text-xs font-bold text-teal-300 backdrop-blur-md transition hover:bg-teal-500/25 hover:text-white active:scale-95"
+                >
+                  <FaFileInvoiceDollar className="text-xs text-teal-400" />
+                  <span>80TTA Cert</span>
+                </Link>
+
+                <Link
                   to="/transactions"
                   className="rounded-2xl border border-slate-700/80 bg-slate-800/80 px-3.5 py-2.5 text-xs font-semibold text-slate-200 backdrop-blur-md transition hover:bg-slate-700 hover:text-white"
                 >
@@ -168,6 +222,11 @@ export default function Dashboard() {
             <Cards key={`cards-${refreshKey}`} />
           </section>
 
+          {/* Quick Pay Hub: 1-Click Saved Beneficiaries */}
+          <section>
+            <QuickPayRibbon key={`quickpay-${refreshKey}`} />
+          </section>
+
           {/* Quick Utility Hub */}
           <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-5 backdrop-blur-xl">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
@@ -177,12 +236,20 @@ export default function Dashboard() {
                 </span>
                 <h3 className="text-base font-bold text-white">Bill Payments & Recharges</h3>
               </div>
-              <Link
-                to="/bills"
-                className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition"
-              >
-                View All Categories →
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/store-pay"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-purple-500/10 border border-purple-500/30 px-3 py-1.5 text-xs font-bold text-purple-300 hover:bg-purple-500/20 transition"
+                >
+                  🛍️ Store Pay →
+                </Link>
+                <Link
+                  to="/bills"
+                  className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition"
+                >
+                  View All Categories →
+                </Link>
+              </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {[

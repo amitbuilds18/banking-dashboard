@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import API from "../services/api";
 import { useToast } from "../context/ToastContext";
 import { FaSnowflake, FaEye, FaEyeSlash, FaCopy, FaSlidersH, FaLock } from "react-icons/fa";
@@ -290,6 +291,13 @@ export default function VirtualCard() {
             className="mt-2 w-full accent-cyan-400"
           />
         </div>
+
+        <Link
+          to="/cards"
+          className="mt-2 flex items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 py-2 text-xs font-bold text-cyan-300 hover:bg-slate-700 hover:text-white transition"
+        >
+          <span>Card Controls & PIN Security →</span>
+        </Link>
       </div>
     </div>
   );

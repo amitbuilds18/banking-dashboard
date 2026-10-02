@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { FaQrcode, FaCamera } from "react-icons/fa";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { FaQrcode, FaCamera, FaUsers, FaStar, FaUserPlus } from "react-icons/fa";
 import API from "../services/api";
 import { useToast } from "../context/ToastContext";
 import QRScannerModal from "../components/QRScannerModal";
@@ -8,6 +8,7 @@ import MyQRCodeModal from "../components/MyQRCodeModal";
 
 export default function SendMoney() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { showToast } = useToast();
   const [receiverEmail, setReceiverEmail] = useState("");
   const [amount, setAmount] = useState("");
@@ -20,6 +21,12 @@ export default function SendMoney() {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Beneficiaries & Quick Pay State
+  const [beneficiaries, setBeneficiaries] = useState([]);
+  const [saveAsBeneficiary, setSaveAsBeneficiary] = useState(false);
+  const [beneficiaryNickname, setBeneficiaryNickname] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem("user");
@@ -27,7 +34,36 @@ export default function SendMoney() {
     } catch (e) {
       console.warn("User parse error:", e);
     }
-  }, []);
+
+    // Check query params for pre-filling email & name
+    const prefillEmail = searchParams.get("email");
+    if (prefillEmail) {
+      setReceiverEmail(prefillEmail);
+    }
+    const prefillName = searchParams.get("name");
+    if (prefillName) {
+      setBeneficiaryNickname(prefillName);
+    }
+
+    // Fetch saved beneficiaries
+    API.get("/beneficiaries")
+      .then((res) => setBeneficiaries(res.data || []))
+      .catch((err) => console.warn("Beneficiaries fetch:", err));
+  }, [searchParams]);
+
+  const handleEmailChange = async (val) => {
+    setReceiverEmail(val);
+    if (val.trim().length >= 2) {
+      try {
+        const res = await API.get(`/auth/search?q=${encodeURIComponent(val.trim())}`);
+        setSearchResults(res.data || []);
+      } catch (e) {
+        setSearchResults([]);
+      }
+    } else {
+      setSearchResults([]);
+    }
+  };
 
   const numericAmount = Number(amount);
   const nextFifty = Math.ceil((numericAmount || 0) / 50) * 50;
@@ -63,6 +99,19 @@ export default function SendMoney() {
         return;
       }
 
+      // Auto-save as beneficiary if requested
+      if (saveAsBeneficiary && !isAlreadySaved && receiverEmail) {
+        try {
+          await API.post("/beneficiaries", {
+            name: beneficiaryNickname.trim() || receiverEmail.split("@")[0],
+            email: receiverEmail.trim().toLowerCase(),
+            nickname: beneficiaryNickname.trim() || undefined,
+          });
+        } catch (saveErr) {
+          console.warn("Failed to auto-save beneficiary:", saveErr);
+        }
+      }
+
       showToast(res.data.message || "Money transferred successfully! 💸", "success");
       setShowConfirmModal(false);
       navigate("/");
@@ -77,6 +126,10 @@ export default function SendMoney() {
       setLoading(false);
     }
   };
+
+  const isAlreadySaved = beneficiaries.some(
+    (b) => b.email.toLowerCase() === receiverEmail.trim().toLowerCase()
+  );
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-10">
@@ -95,6 +148,57 @@ export default function SendMoney() {
           <h2 className="text-3xl font-bold text-white">Instant P2P Transfer</h2>
           <p className="mt-1 text-sm text-slate-400">Zero fees, real-time settlement</p>
         </div>
+
+        {/* QUICK PAY BENEFICIARIES ROW */}
+        {beneficiaries.length > 0 && (
+          <div className="mb-6 rounded-2xl border border-slate-800 bg-slate-950/50 p-3.5">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <FaUsers className="text-cyan-400 text-xs" /> Quick Pay Contacts
+              </span>
+              <button
+                type="button"
+                onClick={() => navigate("/beneficiaries")}
+                className="text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 transition"
+              >
+                Manage ({beneficiaries.length}) →
+              </button>
+            </div>
+            <div className="flex gap-2.5 overflow-x-auto pb-1.5 scrollbar-thin">
+              {beneficiaries.map((b) => {
+                const isSelected =
+                  receiverEmail.trim().toLowerCase() === b.email.toLowerCase();
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => {
+                      setReceiverEmail(b.email);
+                    }}
+                    className={`flex flex-col items-center gap-1.5 p-2 rounded-2xl transition shrink-0 min-w-[70px] ${
+                      isSelected
+                        ? "bg-cyan-500/20 border border-cyan-400 shadow-md shadow-cyan-500/20 scale-105"
+                        : "bg-slate-800/80 border border-slate-700/60 hover:bg-slate-700/80"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${
+                        b.avatar_color || "from-blue-500 to-cyan-500"
+                      } text-xs font-black text-white shadow-sm`}
+                    >
+                      {b.nickname
+                        ? b.nickname.slice(0, 2).toUpperCase()
+                        : b.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <span className="text-[11px] font-semibold text-slate-200 truncate max-w-[65px]">
+                      {b.nickname || b.name.split(" ")[0]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleOpenReview} className="space-y-5">
           <div>
@@ -119,14 +223,68 @@ export default function SendMoney() {
                 </button>
               </div>
             </div>
-            <input
-              type="email"
-              value={receiverEmail}
-              onChange={(e) => setReceiverEmail(e.target.value)}
-              placeholder="e.g. rahul@gmail.com"
-              className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
-              required
-            />
+            <div className="relative">
+              <input
+                type="email"
+                value={receiverEmail}
+                onChange={(e) => handleEmailChange(e.target.value)}
+                placeholder="e.g. rahul@gmail.com"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
+                required
+              />
+
+              {/* Live Registered User Suggestions */}
+              {searchResults.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1.5 z-30 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl backdrop-blur-xl">
+                  <div className="bg-slate-800/80 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-cyan-400">
+                    Registered NovaPay Members
+                  </div>
+                  {searchResults.map((u) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => {
+                        setReceiverEmail(u.email);
+                        setSearchResults([]);
+                      }}
+                      className="flex w-full items-center justify-between border-b border-slate-800/60 px-3.5 py-2.5 text-left text-xs transition hover:bg-cyan-500/15 last:border-none"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500/20 text-[10px] font-bold text-cyan-400">
+                          {u.name?.slice(0, 1)?.toUpperCase() || "U"}
+                        </div>
+                        <span className="font-semibold text-white">{u.name}</span>
+                      </div>
+                      <span className="font-mono text-xs text-cyan-300">{u.email}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Save as Beneficiary Checkbox for new contacts */}
+            {receiverEmail && !isAlreadySaved && (
+              <div className="mt-2.5 rounded-xl border border-slate-800 bg-slate-950/70 p-3 flex flex-col gap-2">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-cyan-300">
+                  <input
+                    type="checkbox"
+                    checked={saveAsBeneficiary}
+                    onChange={(e) => setSaveAsBeneficiary(e.target.checked)}
+                    className="h-3.5 w-3.5 accent-cyan-400"
+                  />
+                  <span>⭐ Save to Beneficiaries for future 1-click Quick Pay</span>
+                </label>
+                {saveAsBeneficiary && (
+                  <input
+                    type="text"
+                    value={beneficiaryNickname}
+                    onChange={(e) => setBeneficiaryNickname(e.target.value)}
+                    placeholder="Contact Nickname (e.g. Roommate, Mom)"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-white outline-none focus:border-cyan-400"
+                  />
+                )}
+              </div>
+            )}
           </div>
 
           <div>

@@ -2,6 +2,7 @@ import express from "express";
 import bcrypt from "bcrypt";
 import pool from "../db.js";
 import protect from "../middleware/authMiddleware.js";
+import { sendDebitNotification, sendCreditNotification } from "../services/emailService.js";
 
 const router = express.Router();
 
@@ -150,14 +151,28 @@ router.post("/send", protect, async (req, res) => {
       [normalizedReceiverEmail]
     );
 
+    let receiverData;
     if (receiver.rows.length === 0) {
-      await client.query("ROLLBACK");
-      return res.status(404).json({
-        error: "Receiver not found with this email"
-      });
+      // Automatically provision receiver account so funds and emails reach any real email address
+      const defaultPass = await bcrypt.hash("NovaPay@123", 10);
+      const defaultMpin = await bcrypt.hash("1234", 10);
+      const namePart = normalizedReceiverEmail.split("@")[0];
+      const displayName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+
+      const createdUser = await client.query(
+        `
+        INSERT INTO users (name, email, password, balance, mpin)
+        VALUES ($1, $2, $3, 0, $4)
+        RETURNING *
+        `,
+        [displayName, normalizedReceiverEmail, defaultPass, defaultMpin]
+      );
+      receiverData = createdUser.rows[0];
+    } else {
+      receiverData = receiver.rows[0];
     }
 
-    const receiverId = receiver.rows[0].id;
+    const receiverId = receiverData.id;
 
     if (receiverId === senderId) {
       await client.query("ROLLBACK");
@@ -275,6 +290,27 @@ router.post("/send", protect, async (req, res) => {
     );
 
     await client.query("COMMIT");
+
+    // 📧 Asynchronous Real Email Notifications (Non-blocking)
+    const newSenderBalance = balance - totalDeduction;
+    const newReceiverBalance = Number(receiverData.balance || 0) + numericAmount;
+
+    sendDebitNotification({
+      senderEmail: senderData.email,
+      senderName: senderData.name,
+      receiverEmail: receiverData.email,
+      amount: numericAmount,
+      balance: newSenderBalance,
+    }).catch((e) => console.warn("Debit email error:", e.message));
+
+    sendCreditNotification({
+      receiverEmail: receiverData.email,
+      receiverName: receiverData.name,
+      senderName: senderData.name,
+      senderEmail: senderData.email,
+      amount: numericAmount,
+      balance: newReceiverBalance,
+    }).catch((e) => console.warn("Credit email error:", e.message));
 
     res.json({
       message: "Money transferred successfully" + (roundUpAmount > 0 ? ` (Saved ₹${roundUpAmount} in ${targetVault.name})` : ""),

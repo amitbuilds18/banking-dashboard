@@ -21,6 +21,20 @@ import cardRoutes from "./routes/cardRoutes.js";
 import vaultRoutes from "./routes/vaultRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import billRoutes from "./routes/billRoutes.js";
+import beneficiaryRoutes from "./routes/beneficiaryRoutes.js";
+import recurringRoutes from "./routes/recurringRoutes.js";
+import storeRoutes from "./routes/storeRoutes.js";
+import splitBillRoutes from "./routes/splitBillRoutes.js";
+import fdRoutes from "./routes/fdRoutes.js";
+import forexRoutes from "./routes/forexRoutes.js";
+import kycRoutes from "./routes/kycRoutes.js";
+import loanRoutes from "./routes/loanRoutes.js";
+import rewardRoutes from "./routes/rewardRoutes.js";
+import goldRoutes from "./routes/goldRoutes.js";
+import paymentLinkRoutes from "./routes/paymentLinkRoutes.js";
+import taxRoutes from "./routes/taxRoutes.js";
+import biometricRoutes from "./routes/biometricRoutes.js";
+import creditCardRoutes from "./routes/creditCardRoutes.js";
 import { initDatabase } from "./initDb.js";
 
 // Initialize database schema tables on startup
@@ -84,6 +98,48 @@ app.use("/api/ai", aiRoutes);
 
 // ⚡ UTILITY BILL & RECHARGE ROUTES
 app.use("/api/bills", billRoutes);
+
+// 👥 SAVED BENEFICIARIES & QUICK PAY ROUTES
+app.use("/api/beneficiaries", beneficiaryRoutes);
+
+// 🔁 RECURRING AUTOPAY & SUBSCRIPTIONS ROUTES
+app.use("/api/recurring", recurringRoutes);
+
+// 🛍️ STORE PAY & MERCHANT EXPENSE ROUTES
+app.use("/api/store-pay", storeRoutes);
+
+// 👥 SPLIT BILL & GROUP EXPENSE ROUTES
+app.use("/api/split-bills", splitBillRoutes);
+
+// 🏛️ FIXED DEPOSITS & HIGH-YIELD SAVINGS ROUTES
+app.use("/api/fixed-deposits", fdRoutes);
+
+// 🌐 MULTI-CURRENCY & FOREX WALLETS ROUTES
+app.use("/api/forex", forexRoutes);
+
+// 🆔 DIGITAL IDENTITY & E-KYC ROUTES
+app.use("/api/kyc", kycRoutes);
+
+// 💰 PRE-APPROVED PERSONAL LOANS & CREDIT LINE ROUTES
+app.use("/api/loans", loanRoutes);
+
+// 🎁 REWARDS, CASHBACK & SCRATCH CARDS ROUTES
+app.use("/api/rewards", rewardRoutes);
+
+// ✨ 24K DIGITAL GOLD & WEALTH ROUTES
+app.use("/api/gold", goldRoutes);
+
+// 🔗 PAYMENT REQUESTS & SHAREABLE PAYMENT LINKS ROUTES
+app.use("/api/payment-links", paymentLinkRoutes);
+
+// 🏛️ SMART TAX OPTIMIZER & ADVANCE TAX ROUTES
+app.use("/api/tax", taxRoutes);
+
+// ⚡ HARDWARE BIOMETRIC WEBAUTHN AUTHENTICATION ROUTES
+app.use("/api/biometrics", biometricRoutes);
+
+// 💳 EXTERNAL CREDIT CARD BILL MANAGEMENT & PAYMENTS ROUTES
+app.use("/api/credit-cards", creditCardRoutes);
 
 // HEALTH CHECK ROUTE (Verifies Neon PostgreSQL live connection & latency)
 app.get("/api/health", async (req, res) => {

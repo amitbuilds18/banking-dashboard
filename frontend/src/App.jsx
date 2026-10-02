@@ -14,6 +14,23 @@ const SendMoney = lazy(() => import("./pages/SendMoney"));
 const Success = lazy(() => import("./pages/Success"));
 const Profile = lazy(() => import("./pages/Profile"));
 const BillPay = lazy(() => import("./pages/BillPay"));
+const Beneficiaries = lazy(() => import("./pages/Beneficiaries"));
+const Autopay = lazy(() => import("./pages/Autopay"));
+const StorePay = lazy(() => import("./pages/StorePay"));
+const SplitBill = lazy(() => import("./pages/SplitBill"));
+const FixedDeposits = lazy(() => import("./pages/FixedDeposits"));
+const Budgets = lazy(() => import("./pages/Budgets"));
+const Forex = lazy(() => import("./pages/Forex"));
+const CardsPage = lazy(() => import("./pages/CardsPage"));
+const KycVerification = lazy(() => import("./pages/KycVerification"));
+const Loans = lazy(() => import("./pages/Loans"));
+const Rewards = lazy(() => import("./pages/Rewards"));
+const GoldVault = lazy(() => import("./pages/GoldVault"));
+const PaymentLinks = lazy(() => import("./pages/PaymentLinks"));
+const PublicPay = lazy(() => import("./pages/PublicPay"));
+const TaxPlanner = lazy(() => import("./pages/TaxPlanner"));
+const CreditCards = lazy(() => import("./pages/CreditCards"));
+const TaxCertificates = lazy(() => import("./pages/TaxCertificates"));
 
 /**
  * Intelligently routes the root URL:
@@ -118,6 +135,153 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/beneficiaries"
+            element={
+              <ProtectedRoute>
+                <Beneficiaries />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/autopay"
+            element={
+              <ProtectedRoute>
+                <Autopay />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/store-pay"
+            element={
+              <ProtectedRoute>
+                <StorePay />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/split-bills"
+            element={
+              <ProtectedRoute>
+                <SplitBill />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/fixed-deposits"
+            element={
+              <ProtectedRoute>
+                <FixedDeposits />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/budgets"
+            element={
+              <ProtectedRoute>
+                <Budgets />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/forex"
+            element={
+              <ProtectedRoute>
+                <Forex />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/cards"
+            element={
+              <ProtectedRoute>
+                <CardsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/kyc"
+            element={
+              <ProtectedRoute>
+                <KycVerification />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/loans"
+            element={
+              <ProtectedRoute>
+                <Loans />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/rewards"
+            element={
+              <ProtectedRoute>
+                <Rewards />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/gold"
+            element={
+              <ProtectedRoute>
+                <GoldVault />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/payment-links"
+            element={
+              <ProtectedRoute>
+                <PaymentLinks />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/tax"
+            element={
+              <ProtectedRoute>
+                <TaxPlanner />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/credit-cards"
+            element={
+              <ProtectedRoute>
+                <CreditCards />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/tax-certificates"
+            element={
+              <ProtectedRoute>
+                <TaxCertificates />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Public Hosted Payment Checkout (No login required) */}
+          <Route path="/pay/:linkCode" element={<PublicPay />} />
 
           {/* Catch-all fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
