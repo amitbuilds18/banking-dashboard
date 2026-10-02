@@ -1,6 +1,7 @@
 import express from "express";
 import pool from "../db.js";
 import protect from "../middleware/authMiddleware.js";
+import { emitToUser, emitPaymentLinkUpdate } from "../socket.js";
 
 const router = express.Router();
 
@@ -269,6 +270,27 @@ router.post("/public/:linkCode/settle", async (req, res) => {
     );
 
     await client.query("COMMIT");
+
+    // ⚡ Real-Time Socket.io Updates
+    emitPaymentLinkUpdate(link.link_code, {
+      status: "paid",
+      amount,
+      payerName,
+      txRef,
+      paidAt: new Date().toISOString(),
+    });
+
+    emitToUser(link.user_id, "payment_received", {
+      amount,
+      senderName: payerName,
+      type: "payment_link",
+      description: link.description,
+    });
+
+    emitToUser(link.user_id, "new_notification", {
+      title: "💰 Payment Link Paid!",
+      message: `Received ₹${amount.toLocaleString("en-IN")} from ${payerName}`,
+    });
 
     res.json({
       message: "Payment processed successfully!",

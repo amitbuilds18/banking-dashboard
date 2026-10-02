@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
+import { useSocket } from "../context/SocketContext";
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
+  const { socket, isConnected } = useSocket();
 
   const loadNotifications = async () => {
     try {
@@ -18,14 +20,25 @@ export default function NotificationBell() {
   };
 
   useEffect(() => {
-    const initialLoad = setTimeout(loadNotifications, 0);
-    const interval = setInterval(loadNotifications, 5000);
+    loadNotifications();
+  }, []);
+
+  // Listen to real-time socket events for instant notifications
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRealtimeUpdate = () => {
+      loadNotifications();
+    };
+
+    socket.on("new_notification", handleRealtimeUpdate);
+    socket.on("payment_received", handleRealtimeUpdate);
 
     return () => {
-      clearTimeout(initialLoad);
-      clearInterval(interval);
+      socket.off("new_notification", handleRealtimeUpdate);
+      socket.off("payment_received", handleRealtimeUpdate);
     };
-  }, []);
+  }, [socket]);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
@@ -47,8 +60,19 @@ export default function NotificationBell() {
       >
         🔔
 
+        {/* Live Socket Status Dot */}
+        {isConnected && (
+          <span
+            title="Real-Time Socket Connected"
+            className="absolute -left-0.5 -top-0.5 flex h-2.5 w-2.5 items-center justify-center"
+          >
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+          </span>
+        )}
+
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-md">
             {unreadCount}
           </span>
         )}
@@ -56,8 +80,18 @@ export default function NotificationBell() {
 
       {open && (
         <div className="absolute right-0 z-50 mt-3 w-[22rem] overflow-hidden rounded-2xl border border-slate-700 bg-slate-900/95 shadow-2xl shadow-slate-950/40 backdrop-blur-xl">
-          <div className="border-b border-slate-700 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
-            Notifications
+          <div className="flex items-center justify-between border-b border-slate-700 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
+            <span>Notifications</span>
+            {isConnected ? (
+              <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 lowercase tracking-normal">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live Real-Time
+              </span>
+            ) : (
+              <span className="text-[10px] text-slate-500 lowercase tracking-normal">
+                Connecting...
+              </span>
+            )}
           </div>
 
           {notifications.length === 0 ? (

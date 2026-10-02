@@ -1,8 +1,10 @@
 import express from "express";
+import http from "http";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import { initSocket } from "./socket.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,6 +43,9 @@ import { initDatabase } from "./initDb.js";
 initDatabase();
 
 const app = express();
+const server = http.createServer(app);
+const io = initSocket(server);
+app.set("io", io);
 
 const configuredFrontendOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
 const allowedOrigins = new Set([
@@ -181,9 +186,10 @@ app.use((err, req, res, next) => {
 });
 
 if (!process.env.VERCEL) {
-  app.listen(process.env.PORT || 5000, () => {
-    console.log(`Server running on port ${process.env.PORT || 5000}`);
+  server.listen(process.env.PORT || 5000, () => {
+    console.log(`Server & Socket.io running on port ${process.env.PORT || 5000}`);
   });
 }
 
+export { server };
 export default app;

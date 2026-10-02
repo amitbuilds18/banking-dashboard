@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import pool from "../db.js";
 import protect from "../middleware/authMiddleware.js";
 import { sendDebitNotification, sendCreditNotification } from "../services/emailService.js";
+import { emitToUser } from "../socket.js";
 
 const router = express.Router();
 
@@ -291,9 +292,28 @@ router.post("/send", protect, async (req, res) => {
 
     await client.query("COMMIT");
 
-    // 📧 Asynchronous Real Email Notifications (Non-blocking)
     const newSenderBalance = balance - totalDeduction;
     const newReceiverBalance = Number(receiverData.balance || 0) + numericAmount;
+
+    // ⚡ Real-Time Socket.io Updates
+    emitToUser(receiverId, "payment_received", {
+      amount: numericAmount,
+      senderName: senderData.name,
+      senderEmail: senderData.email,
+      newBalance: newReceiverBalance,
+      type: "transfer",
+    });
+
+    emitToUser(receiverId, "new_notification", {
+      title: "Money Received 💸",
+      message: `₹${numericAmount} received from ${senderData.name}`,
+    });
+
+    emitToUser(senderId, "balance_updated", {
+      balance: newSenderBalance,
+    });
+
+    // 📧 Asynchronous Real Email Notifications (Non-blocking)
 
     sendDebitNotification({
       senderEmail: senderData.email,
