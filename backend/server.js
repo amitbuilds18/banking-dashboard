@@ -186,8 +186,18 @@ app.use((err, req, res, next) => {
 });
 
 if (!process.env.VERCEL) {
-  server.listen(process.env.PORT || 5000, () => {
-    console.log(`Server & Socket.io running on port ${process.env.PORT || 5000}`);
+  const PORT = process.env.PORT || 5000;
+  server.listen(PORT, () => {
+    console.log(`Server & Socket.io running on port ${PORT}`);
+  });
+
+  server.on("error", (err) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`⚠️ Port ${PORT} is already in use by another instance.`);
+      console.error(`👉 Run in PowerShell: Stop-Process -Id (Get-NetTCPConnection -LocalPort ${PORT}).OwningProcess -Force`);
+    } else {
+      console.error("Server error:", err);
+    }
   });
 }
 
